@@ -1,23 +1,61 @@
-import logo from './logo.svg';
+import { useEffect, useState } from 'react';
 import './App.css';
+import axios from 'axios';
+
+const URL = "http://localhost:3001/"
 
 function App() {
+  const [persons, setPersons] = useState([])
+  const [newName, setNewName] = useState("")
+
+  useEffect(() => {
+    axios.get(URL)
+     .then((response) => {
+      console.log(response.data)
+      setPersons(response.data)
+     }).catch(error => {
+      alert(error)
+     })
+  }, [])
+
+  const save = (e) => {
+    e.preventDefault()
+    const json = JSON.stringify({name: newName})
+    axios.post(URL + "new", json, {
+      headers: {
+        "Content-type" : "application/json"
+      }
+    }).then((response) => {
+      setPersons(persons => [...persons,response.data])
+      setNewName("")
+    }).catch(error => {
+      alert(error)
+    })
+  }
+
+  const remove = (name) => [
+    axios.delete(`${URL}delete/${name}`)
+     .then(() => {
+      const tempPersons = [...persons]
+      tempPersons.splice(tempPersons.findIndex(e => e.name===name), 1)
+      setPersons(tempPersons)
+     }).catch(error => {
+      alert(error)
+     })
+  ]
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <h3>Calling node routes demo</h3>
+      <form onSubmit = {save}>
+        <input value = {newName} onChange = {e => setNewName(e.target.value)}/>
+        <button>Save</button>
+      </form>
+      <ul>
+        {persons.map(person => (
+          <li>{person.name} <a href="#" onClick = {() => remove(person.name)}>Delete</a></li>
+        ))}
+      </ul>
     </div>
   );
 }
